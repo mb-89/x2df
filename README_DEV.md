@@ -1,0 +1,5 @@
+#About the setup system
+* setup.py will automatically build requirements.txt, using pipreqs, and also use it for its own requirements.
+* to install the package, run "pip install ." in this directory
+* to install the package in editable mode, run "pip install -e ." (for devs)
+* to build the wheel-file for this package, run "py -m build" in this folder. 
