@@ -3,7 +3,8 @@ import subprocess
 import shutil
 import configparser
 
-with open("README.md", "r", encoding="utf-8") as fh: long_description = fh.read()
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 subprocess.call(["pipreqs", ".", "--force"])
 
 cfg = configparser.ConfigParser()
@@ -11,7 +12,9 @@ cfg.read("setup.cfg")
 
 dct = {}
 for s in cfg.sections():
-    for k,v in cfg[s].items():
+    if s not in ["metadata", "options"]:
+        continue
+    for k, v in cfg[s].items():
         dct[k] = v
 
 dct["long_description"] = long_description
@@ -22,4 +25,4 @@ dct["install_requires"] = open("requirements.txt", "r").readlines()
 
 setuptools.setup(**dct)
 shutil.rmtree("build", ignore_errors=True)
-shutil.rmtree("src/dfana.egg-info", ignore_errors=True)
+shutil.rmtree(f"src/{dct['name']}.egg-info", ignore_errors=True)
