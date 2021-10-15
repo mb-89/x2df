@@ -27,6 +27,7 @@ def main(argv):
         parser.print_help()
         return 0
 
-    # if we are here, we have srcs and a dst
+    # if we are here, we have srcs and a have a dst.
+    # it makes no sense to call the cmd line utility without a dst.
     log.info(args)
     return 0
