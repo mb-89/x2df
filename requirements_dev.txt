@@ -1,0 +1,7 @@
+wheel
+pipreqs
+flake8
+black
+pytest
+pytest-cov
+build
