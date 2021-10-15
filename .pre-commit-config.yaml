@@ -7,6 +7,14 @@ repos:
     language: system
     types: [python]
     pass_filenames: false
+- repo: local
+  hooks:
+  - id: writemetadata
+    name: writemetadata
+    entry: pipreqs --force
+    language: system
+    types: [shell]
+    pass_filenames: false
 - repo: https://github.com/psf/black
   rev: 21.9b0
   hooks:
