@@ -9,8 +9,8 @@ repos:
     pass_filenames: false
 - repo: local
   hooks:
-  - id: writemetadata
-    name: writemetadata
+  - id: pipreqs
+    name: pipreqs
     entry: pipreqs --force
     language: system
     types: [shell]
