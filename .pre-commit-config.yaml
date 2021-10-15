@@ -11,7 +11,7 @@ repos:
     name: pipreqs
     entry: pipreqs --force
     language: system
-    types: [shell]
+    types: [python]
     pass_filenames: false
 - repo: https://github.com/psf/black
   rev: 21.9b0
