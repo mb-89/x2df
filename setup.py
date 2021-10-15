@@ -1,11 +1,17 @@
 import setuptools
-import subprocess
 import shutil
 import configparser
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
-subprocess.call(["pipreqs", ".", "--force"])
+
+try:
+    import pipreqs  # noqa: F401 #if we can import pipreqs, then the cmd utility exists
+    import subprocess
+
+    subprocess.call(["pipreqs", ".", "--force"])
+except ModuleNotFoundError:
+    pass
 
 cfg = configparser.ConfigParser()
 cfg.read("setup.cfg")
