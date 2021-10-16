@@ -8,3 +8,7 @@
 * uses pytest for testing (#TODO: make pytest part of pre-push and maybe even github actions)
 
 See also: https://www.youtube.com/watch?v=DhUpxWjOhME
+
+#Sidenotes
+* If you want to debug tests, you need to disable the coverage module. It interferes with the
+VSCode test debugger (remove "--cov=x2df --cov-report term-missing -v" in pyproject.toml)

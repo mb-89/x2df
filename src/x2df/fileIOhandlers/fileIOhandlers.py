@@ -5,7 +5,7 @@ from functools import cache
 
 @cache
 def getClassDict():
-    prefix = "dumper_"
+    prefix = "fileIOhandler_"
     classes = {}
     mods = glob(op.join(op.dirname(__file__), "*.py"))
     mods = [f for f in mods if op.isfile(f) and op.basename(f).startswith(prefix)]
@@ -14,7 +14,7 @@ def getClassDict():
         mname,
         mfile,
     ) in mods:  # this is ugly, but otherwise the coverage report doesnt find it...
-        importname = f"x2df.dumpers.{mname}"
+        importname = f"x2df.fileIOhandlers.{mname}"
         exec("import " + importname)
-        classes[mname.replace(prefix, "")] = eval(f"{importname}.Dumper")
+        classes[mname.replace(prefix, "")] = eval(f"{importname}.Handler")
     return classes

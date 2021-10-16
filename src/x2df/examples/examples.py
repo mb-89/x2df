@@ -18,3 +18,12 @@ def getClassDict():
         exec("import " + importname)
         classes[mname.replace(prefix, "")] = eval(f"{importname}.Example")
     return classes
+
+
+def loadExample(examplename):
+    dfs = []
+    examplename = examplename.replace("example_", "")
+    ex = getClassDict().get(examplename)
+    if ex:
+        dfs.append(ex().createDF())
+    return dfs

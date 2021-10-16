@@ -1,9 +1,25 @@
 import logging
 import argparse
 from .__metadata__ import __version__
-from x2df.dumpers import dumpers
+from x2df.fileIOhandlers import fileIOhandlers
+from x2df.examples import examples
+from glob import glob
+import os.path as op
+import shutil
+import tempfile
+import py7zr
 
 log = logging.getLogger("x2df")
+
+# https://stackoverflow.com/a/59305379
+try:
+    shutil.register_unpack_format("7zip", [".7z"], py7zr.unpack_7zarchive)
+except shutil.RegistryError:  # pragma: no cover
+    pass
+try:
+    shutil.register_archive_format("7zip", py7zr.pack_7zarchive)
+except shutil.RegistryError:  # pragma: no cover
+    pass
 
 
 def main(argv):
@@ -15,7 +31,7 @@ def main(argv):
     parser.add_argument("dst", nargs="?", help="destination path for the results.")
     parser.add_argument(
         "--dstfmt",
-        choices=sorted(list(dumpers.getClassDict().keys())),
+        choices=sorted(list(fileIOhandlers.getClassDict().keys())),
         help="data format for the results. Defaults to parquet.",
         default="parquet",
     )
@@ -44,10 +60,58 @@ def main(argv):
     return 0
 
 
-def load(src):
-    dfs = [0]
-    return dfs
+def load(src, postprocess=True, _claimedPaths=[]):
+    src = str(src)
+    globresults = glob(src)
+    # gate #1: check if we want to load an example
+    if not globresults:
+        if src.startswith("example_"):
+            return examples.loadExample(src)
+        else:
+            return []
+
+    # gate #2: check if we have more than one result
+    if len(globresults) > 1:
+        dfList = []
+        files = [x for x in globresults if op.isfile(x)]
+        dirs = [x for x in globresults if op.isdir(x)]
+        for x in files:
+            dfList.extend(load(x, _claimedPaths=_claimedPaths))
+        for x in dirs:
+            # we check the files before the dirs, because with some formats,
+            # a file can claim adjacent dirs
+            dfList.extend(load(x, _claimedPaths=_claimedPaths))
+        return dfList
+
+    x = globresults[0]
+
+    # gate #3: check if the given path is already claimed
+    if x in _claimedPaths:
+        return []
+
+    # gate #4: check if the given path is a dir, and if so, glob it
+    if op.isdir(x):
+        return load(src + "/*", _claimedPaths=_claimedPaths)
+
+    # finally, if we are here, x is the path of a single file.
+    # Now we can check if any of the installed parsers claims it
+    for name, hdl in fileIOhandlers.getClassDict().items():
+        claims = hdl().claim(x)
+        if not claims:
+            continue
+        _claimedPaths.extend(claims)
+        dfs = hdl().parse(x)
+        return dfs
+
+    # if None of the handlers claimed the file, check if it is an archive.
+    # if so, extract and treat like a folder
+    with tempfile.TemporaryDirectory() as td:
+        try:
+            shutil.unpack_archive(x, td)
+            return load(td + "/*", _claimedPaths=_claimedPaths)
+        except (ValueError, shutil.ReadError) as _:  # noqa: F841
+            return []  # if we are here, we found nothing
 
 
 def dump(df, dst, fmt):
-    pass
+    fileIOhandlers.getClassDict()[fmt]().dump(df, dst)

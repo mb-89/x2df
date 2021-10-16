@@ -1,5 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class AbstractExample(ABC):
-    pass
+    @abstractmethod
+    def createDF(self):
+        """creates the dataframe that contains the example data"""
