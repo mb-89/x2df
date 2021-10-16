@@ -60,6 +60,10 @@ def main(argv):
     return 0
 
 
+def getExampleNames():
+    return tuple(sorted(("example_" + x for x in examples.getClassDict().keys())))
+
+
 def load(src, postprocess=True, _claimedPaths=[]):
     src = str(src)
     globresults = glob(src)
