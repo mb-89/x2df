@@ -1,4 +1,4 @@
-usage: parses given glob-style paths and extracts dataframes.Dumps all dataframes into the dst directory
+usage: parses given glob-style paths and extracts dataframes. Dumps all dataframes into the dst directory
        [-h] [--dstfmt {parquet}] [-?] [-v] [srcs ...] [dst]
 
 positional arguments:

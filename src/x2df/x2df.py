@@ -25,7 +25,7 @@ except shutil.RegistryError:  # pragma: no cover
 def main(argv):
     parser = argparse.ArgumentParser(
         "parses given glob-style paths and extracts dataframes."
-        + "Dumps all dataframes into the dst directory"
+        + " Dumps all dataframes into the dst directory"
     )
     parser.add_argument("srcs", nargs="*", help="glob-style paths that will be parsed")
     parser.add_argument("dst", nargs="?", help="destination path for the results.")

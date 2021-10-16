@@ -1,4 +1,4 @@
-from pipreqs import pipreqs
+from pipreqs.pipreqs import docopt, __doc__, __version__, init
 import os
 import os.path as op
 
@@ -11,7 +11,11 @@ def main():
         os.remove(dst)
     except FileNotFoundError:
         pass
-    pipreqs.main()
+
+    # this is a copy of the pipreqs main fcn, but we pass our own argv to docopt
+    args = docopt(__doc__, argv=[], version=__version__)
+    init(args)
+
     unsorted = open(dst, "r").readlines()
     sortedlst = sorted(unsorted)
     open(dst, "w").write("".join(sortedlst))

@@ -27,6 +27,7 @@ dct["long_description_content_type"] = "text/markdown"
 dct["package_dir"] = {"": "src"}
 dct["packages"] = setuptools.find_packages(where="src")
 dct["install_requires"] = open("requirements.txt", "r").readlines()
+dct["include_package_data"] = True
 
 setuptools.setup(**dct)
 shutil.rmtree("build", ignore_errors=True)
