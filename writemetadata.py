@@ -14,6 +14,6 @@ open("src/x2df/__metadata__.py", "w").write("\n".join(lines))
 # write cmdline help to file
 
 
-with open(op.join(op.dirname(__file__), "README_CMDLINE.md"), "w") as f:
+with open(op.join(op.dirname(__file__), "README_CMDLINE"), "w") as f:
     with redirect_stdout(f):
         x2df.main(["-?"])
