@@ -1,5 +1,5 @@
 import pytest
-from x2df import examples
+from . import examples
 
 
 @pytest.fixture(scope="session")

@@ -6,10 +6,9 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 try:
-    import pipreqs  # noqa: F401 #if we can import pipreqs, then the cmd utility exists
-    import subprocess
+    import pipreqs_sorted
 
-    subprocess.call(["pipreqs", ".", "--force"])
+    pipreqs_sorted.main()
 except ModuleNotFoundError:
     pass
 

@@ -7,10 +7,11 @@ log = logging.getLogger("x2df")
 
 def main(argv):
     parser = argparse.ArgumentParser(
-        "parses given glob-style paths and extracts dataframes"
+        "parses given glob-style paths and extracts dataframes."
+        + "Dumps all dataframes into parquet-files"
     )
     parser.add_argument("srcs", nargs="*", help="glob-style paths that will be parsed")
-    parser.add_argument("dst", nargs="?", help="destination path for the results")
+    parser.add_argument("dst", nargs="?", help="destination path for the results.")
     parser.add_argument(
         "-?", action="store_true", help="show this help message and exit"
     )
@@ -29,5 +30,18 @@ def main(argv):
 
     # if we are here, we have srcs and a have a dst.
     # it makes no sense to call the cmd line utility without a dst.
-    log.info(args)
+    for src in args["srcs"]:
+        dfs = load(src)
+        if args["dst"]:
+            for df in dfs:
+                dump(df, args["dst"])
     return 0
+
+
+def load(src):
+    dfs = []
+    return dfs
+
+
+def dump(df, dst):
+    pass

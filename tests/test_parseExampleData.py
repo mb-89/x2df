@@ -1,7 +1,7 @@
 from x2df import x2df
 import pytest
 import os.path as op
-from x2df import examples
+from . import examples
 
 exampleList = examples.getExampleNameList() + ["invalidExampleName"]
 
