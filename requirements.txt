@@ -1,2 +1,1 @@
 pipreqs==0.4.10
-pytest==6.2.5

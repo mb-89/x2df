@@ -1,6 +1,7 @@
 import logging
 import argparse
 from .__metadata__ import __version__
+from x2df.dumpers import dumpers
 
 log = logging.getLogger("x2df")
 
@@ -8,10 +9,16 @@ log = logging.getLogger("x2df")
 def main(argv):
     parser = argparse.ArgumentParser(
         "parses given glob-style paths and extracts dataframes."
-        + "Dumps all dataframes into parquet-files"
+        + "Dumps all dataframes into the dst directory"
     )
     parser.add_argument("srcs", nargs="*", help="glob-style paths that will be parsed")
     parser.add_argument("dst", nargs="?", help="destination path for the results.")
+    parser.add_argument(
+        "--dstfmt",
+        choices=sorted(list(dumpers.getClassDict().keys())),
+        help="data format for the results. Defaults to parquet.",
+        default="parquet",
+    )
     parser.add_argument(
         "-?", action="store_true", help="show this help message and exit"
     )
@@ -32,16 +39,15 @@ def main(argv):
     # it makes no sense to call the cmd line utility without a dst.
     for src in args["srcs"]:
         dfs = load(src)
-        if args["dst"]:
-            for df in dfs:
-                dump(df, args["dst"])
+        for df in dfs:
+            dump(df, args["dst"], args["dstfmt"])
     return 0
 
 
 def load(src):
-    dfs = []
+    dfs = [0]
     return dfs
 
 
-def dump(df, dst):
+def dump(df, dst, fmt):
     pass

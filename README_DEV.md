@@ -6,3 +6,5 @@
 
 * uses black and flake8 for linting (they are also part of the pre-commit hook)
 * uses pytest for testing (#TODO: make pytest part of pre-push and maybe even github actions)
+
+See also: https://www.youtube.com/watch?v=DhUpxWjOhME
