@@ -26,6 +26,9 @@ def test_parse_invalid_and_directory(tmp_path):
     dfs = x2df.load(invalidpath / "subsubdir")
     assert dfs == []
 
+    dfs = x2df.load(invalidpath / "bla")  # non-existing file
+    assert dfs == []
+
 
 def test_claimed_file(tmp_path, monkeypatch):
     # we dont support a format that claimes other files yet, so lets design a mockup:

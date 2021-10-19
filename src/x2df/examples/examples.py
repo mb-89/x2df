@@ -20,6 +20,7 @@ def getClassDict():
     return classes
 
 
+@cache
 def loadExample(examplename):
     dfs = []
     examplename = examplename.replace("example_", "")

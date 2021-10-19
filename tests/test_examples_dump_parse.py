@@ -3,13 +3,12 @@ from x2df.examples import examples
 import itertools
 from x2df.fileIOhandlers import fileIOhandlers
 
-handlerDict = fileIOhandlers.getClassDict()
-exampleDict = examples.getClassDict()
-
 
 def test_create_dump_parse_examples(tmp_path):
     # in this test, we iterate over all examples and dumpers,
     # dump the data and parse it back.
+    handlerDict = fileIOhandlers.getClassDict()
+    exampleDict = examples.getClassDict()
     files = []
     if len(exampleDict) > len(handlerDict):
         combis = [(i, j) for i, j in zip(exampleDict, itertools.cycle(handlerDict))]
@@ -30,8 +29,9 @@ def test_create_dump_parse_examples(tmp_path):
 
 
 def test_parse_dump_via_main(tmp_path):
+    handlerDict = fileIOhandlers.getClassDict()
     # here, we use the main fcn to parse and dump one file (for coverage)
-    ex = list(exampleDict.keys())[0]
+    ex = x2df.getExampleNames()[0]
     dump = list(handlerDict.keys())[0]
     dst = str(tmp_path / (ex + f".{dump}"))
     assert x2df.main(["test", f"example_{ex}", dst, "--dstfmt", dump]) == 0
