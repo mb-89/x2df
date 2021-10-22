@@ -12,12 +12,15 @@ class Handler(FileIOhandler):
 
         df.to_parquet(dst)
 
-    def parse(self, path):
+    def parse(self, path, postprocess=True):
         import pyarrow  # noqa: F401
         import pandas as pd
 
         dfraw = pd.read_parquet(path)
-        return self.processRawDF(dfraw)
+        if postprocess:
+            return self.processRawDF(dfraw)
+        else:
+            return [dfraw]
 
     def claim(self, path):
         import pyarrow  # noqa: F401

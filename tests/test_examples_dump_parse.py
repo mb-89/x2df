@@ -35,3 +35,8 @@ def test_parse_dump_via_main(tmp_path):
     dump = list(handlerDict.keys())[0]
     dst = str(tmp_path / (ex + f".{dump}"))
     assert x2df.main(["test", f"example_{ex}", dst, "--dstfmt", dump]) == 0
+
+
+def test_examples_all():
+    res = x2df.load("example_all", postprocess=False)
+    assert len(res) > 0

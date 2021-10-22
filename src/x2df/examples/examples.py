@@ -1,6 +1,7 @@
 from glob import glob
 import os.path as op
 from functools import cache
+from x2df.fileIOhandlers.__fileIOhandler__ import FileIOhandler
 
 
 @cache
@@ -24,7 +25,11 @@ def getClassDict():
 def loadExample(examplename):
     dfs = []
     examplename = examplename.replace("example_", "")
-    ex = getClassDict().get(examplename)
-    if ex:
-        dfs.append(ex().createDF())
+    dct = getClassDict()
+    if examplename == "all":
+        exs = dct.values()
+    else:
+        exs = [dct.get(examplename)]
+    for ex in exs:
+        dfs.extend(FileIOhandler().processRawDF(ex().createDF()))
     return dfs
