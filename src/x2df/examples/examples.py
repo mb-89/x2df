@@ -31,5 +31,7 @@ def loadExample(examplename):
     else:
         exs = [dct.get(examplename)]
     for ex in exs:
+        if not ex:
+            continue
         dfs.extend(FileIOhandler().processRawDF(ex().createDF()))
     return dfs

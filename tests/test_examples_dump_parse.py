@@ -40,3 +40,8 @@ def test_parse_dump_via_main(tmp_path):
 def test_examples_all():
     res = x2df.load("example_all", postprocess=False)
     assert len(res) > 0
+
+
+def test_examples_invalid():
+    res = x2df.load("example_doesNotExist")
+    assert len(res) == 0
