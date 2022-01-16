@@ -6,6 +6,9 @@ from x2df.fileIOhandlers import fileIOhandlers
 from x2df.fileIOhandlers.__fileIOhandler__ import FileIOhandler as FIObaseclass
 from x2df import x2df
 import shutil
+from x2df.examples import examples
+from x2df.fileIOhandlers.fileIOhandler_csv import ParserDialog
+from pyqtgraph import mkQApp, QtCore
 
 handlerDict = fileIOhandlers.getClassDict()
 
@@ -88,3 +91,44 @@ def test_archives(tmp_path):  # for coverage of the archive unzipper path
     shutil.rmtree(tmp_path / "arch")
     dfs = x2df.load(tmp_path)
     assert len(dfs) == 1
+
+
+def test_knownCSVformat(tmp_path):
+    exampleDict = examples.getClassDict()
+    e = "stepresponses1"
+    dfout = exampleDict[e]().createDF()
+    dst = tmp_path / f"{e}.csv"
+    open(dst, "w").write('#{"parseinfo":{"comment":"#"}}\n' + dfout.to_csv(index=False))
+    dfsin = x2df.load(dst, postprocess=False)
+    assert len(dfsin[0]) == len(dfout)
+    assert all(dfout.columns == dfsin[0].columns)
+    # check the path with postprocessing:
+    dfsin = x2df.load(dst, postprocess=True)
+
+
+def test_unknownCSVformat(qtbot, tmp_path):
+    exampleDict = examples.getClassDict()
+    e = "stepresponses1"
+    dfout = exampleDict[e]().createDF()
+    dst = tmp_path / f"{e}.csv"
+    open(dst, "w").write('#{"parseinfo":{"comment":"#"}}\n' + dfout.to_csv(index=False))
+    _ = mkQApp()
+    dlg = ParserDialog(dst)
+    qtbot.addWidget(dlg)
+    dlg.show()
+    qtbot.mouseClick(dlg.apply, QtCore.Qt.LeftButton)
+    assert dlg.result["comment"] == "#"
+
+
+def test_invalidCSVformat(qtbot, tmp_path):
+    exampleDict = examples.getClassDict()
+    e = "stepresponses1"
+    dfout = exampleDict[e]().createDF()
+    dst = tmp_path / f"{e}.csv"
+    open(dst, "w").write(
+        '#{"parseinfo":{"sep":"invalidsep"}}\n' + dfout.to_csv(index=False)
+    )
+    _ = mkQApp()
+    dlg = ParserDialog(dst)
+    qtbot.addWidget(dlg)
+    dlg.show()

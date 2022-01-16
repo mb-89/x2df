@@ -2,6 +2,7 @@ from x2df import x2df
 from x2df.examples import examples
 import itertools
 from x2df.fileIOhandlers import fileIOhandlers
+import numpy as np
 
 
 def test_create_dump_parse_examples(tmp_path):
@@ -25,7 +26,15 @@ def test_create_dump_parse_examples(tmp_path):
     # read the dumps back and assert equality (must only hold when not postprocessing)
     for f, origdf in files:
         dfs = x2df.load(f, postprocess=False)
-        assert dfs[0].equals(origdf)
+        identical = dfs[0].equals(origdf)
+
+        # some format are not IEEE-float lossless, so we need to check this way:
+        if not identical and f.name.endswith(".csv"):
+            almostIdentical = np.isclose(origdf, dfs[0]).all()
+        else:
+            almostIdentical = False
+
+        assert identical or almostIdentical
 
 
 def test_parse_dump_via_main(tmp_path):
