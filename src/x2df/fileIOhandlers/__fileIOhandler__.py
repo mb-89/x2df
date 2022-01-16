@@ -1,5 +1,5 @@
 class FileIOhandler:
-    def dump(self, df, dst):
+    def dump(self, df, dst=None, **kwargs):
         """dumps the given dataframe to the given file."""
         raise NotImplementedError
 

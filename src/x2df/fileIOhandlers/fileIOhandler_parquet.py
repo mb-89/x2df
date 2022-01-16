@@ -5,9 +5,11 @@ from x2df.fileIOhandlers.__fileIOhandler__ import FileIOhandler
 
 
 class Handler(FileIOhandler):
-    def dump(self, df, dst):
+    def dump(self, df, dst, **kwargs):
         # we import pyarrow here to make sure that is found by pyreqs.
         # if it is not found, we get an error and need to install it.
+        if not dst:
+            return
         import pyarrow  # noqa: F401
 
         df.to_parquet(dst)

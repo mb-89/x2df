@@ -1,5 +1,4 @@
 from x2df.fileIOhandlers.__fileIOhandler__ import FileIOhandler
-import copy
 from pandas import DataFrame, read_csv
 import json
 import pyqtgraph as pg
@@ -10,38 +9,42 @@ import inspect
 # we want to do the imports as late as possible to
 # keep it snappy once we have more and more fileIOhandlers
 
+dumpparams = inspect.signature(DataFrame.to_csv).parameters.keys()
+
 
 class Handler(FileIOhandler):
-    def dump(self, df, dst):
-        csvstring = '#{"parseinfo":{"comment":"#"}}\n' + df.to_csv(index=False)
-        open(dst, "w").write(csvstring)
+    def dump(self, df, dst=None, **kwargs):
+        kwargs["index"] = False
+        kwargs["line_terminator"] = "\n"
+        parseinfo = df.attrs.setdefault("parseinfo", {})
+        parseinfo["comment"] = "#"
+        metastr = "#" + json.dumps(df.attrs, indent=4).replace("\n", "\n#") + "\n"
+        allargs = kwargs | parseinfo
+        allargs = dict((k, v) for k, v in allargs.items() if k in dumpparams)
+        csvstring = metastr + df.to_csv(**allargs)
+        if dst is not None:
+            open(dst, "w").write(csvstring)
+            return None
+        return csvstring
 
     def parse(self, path, postprocess=True):
-        import pandas as pd
-
         # since csvs are not a well-defined format, lets try a few things:
         # first, check if the file starts with a metadata comment,
         #  we take the parser args from there
         with open(path, "r") as f:
             origmetadata = getMetadata(f)
-        metadata = copy.deepcopy(origmetadata)
         skip = False
         dfraw = DataFrame()
         while not skip:
-            # if we dont have parser args, we ask for them with a gui
-            if not metadata.get("parseinfo"):
-                metadata["parseinfo"], skip = self.getParseInfoViaGUI(path)
-            try:
-                dfraw = pd.read_csv(path, **metadata["parseinfo"])
-            except Exception:
-                metadata["parseinfo"] = {}
-                continue
-            break  # if we are here, we succeeded and dfraw contains a valid dataframe
+            parseinfo, infoValid = getParseInfo(path)
+            if not infoValid:
+                break
+            dfraw = readCSV(path, parseinfo)
+            skip |= not dfraw.empty
 
         # if the parsing was successfull and we changed the original metadata,
         # ask if we should add the metadata to the top of the file.
-        if origmetadata != metadata:
-            self.updateOrigMetadata(path, metadata)
+        updateOrigParseInfo(path, origmetadata, parseinfo, not dfraw.empty)
 
         if postprocess:
             return self.processRawDF(dfraw)
@@ -54,19 +57,73 @@ class Handler(FileIOhandler):
         else:
             return []
 
-    def getParseInfoViaGUI(self, path):
-        dct = {}
-        dlg = ParserDialog(path)
-        dlg.show()
-        dlg.raise_()
-        dlg.activateWindow()
-        ret = dlg.exec()
-        skip = ret == 0
-        dct = dlg.result
-        return dct, skip
 
-    def updateOrigMetadata(self, path, dct):
+def readCSV(path, parseInfo):
+    dfraw = DataFrame()
+    try:
+        dfraw = read_csv(path, **parseInfo)
+    except Exception:
+        pass
+    # we make an assumption here: if we only have one column,
+    # then it is likely that the parsing was incorrect (bc of invalid separator).
+    # In that case, we dont accept the result
+    if len(dfraw.columns) < 2:
+        parseInfo.clear()
+        dfraw = DataFrame()
+    return dfraw
+
+
+def updateOrigParseInfo(path, origmetadata, newparseinfo, isValid):
+    if not isValid or origmetadata.get("parseinfo") == newparseinfo:
         return
+    msgbox = QtWidgets.QMessageBox()
+    msgbox.setWindowTitle("csv parsing")
+    msgbox.setText("CSV parse info was changed")
+    msgbox.setInformativeText(f"Do you want add the parse info to {path}?")
+    msgbox.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+    msgbox.setDefaultButton(QtWidgets.QMessageBox.No)
+    ret = msgbox.exec()
+    if ret == QtWidgets.QMessageBox.No or ret == 0:
+        return
+    txt = open(path, "r").read()
+    newparseinfo["comment"] = "#"  # we need to do this, bc we use # as comment key
+    origmetadata["parseinfo"] = newparseinfo
+    metastr = "#" + json.dumps(origmetadata, indent=4).replace("\n", "\n#") + "\n"
+    txt = metastr + txt
+    open(path, "w").write(txt)
+
+
+def getParseInfo(path):
+    with open(path, "r") as f:
+        md = getMetadata(f)
+    dct = md.get("parseinfo", {})
+    if dct:
+        peekdf = peekCSV(path, dct)
+        invalid = peekdf.empty or len(peekdf.columns) < 2
+        if not invalid:
+            return dct, True
+    dlg = ParserDialog(path)
+    dlg.show()
+    dlg.raise_()
+    dlg.activateWindow()
+    ret = dlg.exec()
+    dct = dlg.result
+    return dct, ret != 0
+
+
+def peekCSV(path, cfg):
+    N = 100
+    firstlines = []
+    try:
+        with open(path, "r") as f:
+            for _ in range(N):
+                sline = f.readline().strip()
+                firstlines.append(sline)
+        head = io.StringIO("\n".join([x for x in firstlines if x]))
+        df = readCSV(head, cfg)
+    except Exception:
+        df = DataFrame()
+    return df
 
 
 def getMetadata(f):
@@ -78,11 +135,25 @@ def getMetadata(f):
             break
         rawlines.append(line[1:])
     if rawlines:
-        dct = json.loads("".join(rawlines))
+        try:
+            dct = json.loads("".join(rawlines))
+        except json.decoder.JSONDecodeError:
+            dct = {}
+    metadataCleanup(dct)
+    f.seek(0)
     return dct
 
 
+def metadataCleanup(dct):
+    for k, v in dct.items():
+        if isinstance(v, dict):
+            metadataCleanup(v)
+            continue
+
+
 class ParserDialog(QtWidgets.QDialog):
+    readySig = QtCore.Signal()
+
     def __init__(self, path):
         N = 100
         pg.mkQApp()
@@ -159,13 +230,11 @@ class ParserDialog(QtWidgets.QDialog):
         with open(path, "r") as f:
             for _ in range(N):
                 sline = f.readline().strip()
-                while not sline:
-                    sline = f.readline().strip()
                 firstlines.append(sline)
         self.head = io.StringIO("\n".join([x for x in firstlines if x]))
         metadata = getMetadata(self.head)
-        self.head.seek(0)
         self.parse(metadata.get("parseinfo", {}))
+        QtCore.QTimer.singleShot(0, self.readySig.emit)
 
     def applyfun(self):
         self.accept()
@@ -186,23 +255,18 @@ class ParserDialog(QtWidgets.QDialog):
         if not dctentries:
             return {}, True
         dcttext = "{" + ",".join(dctentries) + "}"
-        try:
-            dct = json.loads(dcttext)
-        except Exception:
-            return {}, False
+        dct = json.loads(dcttext)
         for k, v in dct.items():
             self.cfgItems[k].setText(v)
         return dct, True
 
-    def parse(self, cfg={}):
+    def parse(self, cfg=None):
+        if cfg is None:
+            cfg = {}
         cfg, cfgvalid = self.parsecfg(cfg)
         if cfgvalid:
-            try:
-                self.head.seek(0)
-                df = read_csv(self.head, **cfg)
-            except Exception:
-                df = DataFrame()
-                cfgvalid = False
+            self.head.seek(0)
+            df = readCSV(self.head, cfg)
         if not cfgvalid or df.empty:
             txt = [
                 "The given cfg did not produce a valid dataframe.\n",

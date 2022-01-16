@@ -9,6 +9,8 @@ import shutil
 import tempfile
 import py7zr
 
+import PySide6  # noqa:F401 we need this so its added to the requirements.txt
+
 log = logging.getLogger("x2df")
 
 # https://stackoverflow.com/a/59305379
@@ -56,7 +58,7 @@ def main(argv):
     for src in args["srcs"]:
         dfs = load(src)
         for df in dfs:
-            dump(df, args["dst"], args["dstfmt"])
+            dump(df, args["dstfmt"], args["dst"])
     return 0
 
 
@@ -64,7 +66,9 @@ def getExampleNames():
     return tuple(sorted(("example_" + x for x in examples.getClassDict().keys())))
 
 
-def load(src, postprocess=True, _claimedPaths=[]):
+def load(src, postprocess=True, _claimedPaths=None):
+    if _claimedPaths is None:
+        _claimedPaths = []
     src = str(src)
     globresults = glob(src)
     # gate #1: check if we want to load an example
@@ -117,5 +121,5 @@ def load(src, postprocess=True, _claimedPaths=[]):
             return []  # if we are here, we found nothing
 
 
-def dump(df, dst, fmt):
-    fileIOhandlers.getClassDict()[fmt]().dump(df, dst)
+def dump(df, fmt, dst=None, **kwargs):
+    return fileIOhandlers.getClassDict()[fmt]().dump(df, dst, **kwargs)

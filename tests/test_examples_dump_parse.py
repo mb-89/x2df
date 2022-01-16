@@ -20,7 +20,7 @@ def test_create_dump_parse_examples(tmp_path):
     for e, d in combis:
         df = exampleDict[e]().createDF()
         dst = tmp_path / f"{e}.{d}"
-        x2df.dump(df, dst, d)
+        x2df.dump(df, d, dst)
         files.append((dst, df))
 
     # read the dumps back and assert equality (must only hold when not postprocessing)
