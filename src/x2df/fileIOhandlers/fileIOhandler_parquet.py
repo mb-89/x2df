@@ -14,7 +14,7 @@ class Handler(FileIOhandler):
 
         df.to_parquet(dst)
 
-    def parse(self, path, postprocess=True):
+    def parse(self, path, postprocess=True, **kwargs):
         import pyarrow  # noqa: F401
         import pandas as pd
 

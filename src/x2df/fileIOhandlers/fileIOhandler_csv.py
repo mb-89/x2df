@@ -28,16 +28,26 @@ class Handler(FileIOhandler):
             return None
         return csvstring
 
-    def parse(self, path, postprocess=True):
+    def parse(self, path, postprocess=True, **kwargs):
         # since csvs are not a well-defined format, lets try a few things:
         # first, check if the file starts with a metadata comment,
         #  we take the parser args from there
+        tryParseOverride = kwargs.get("parseinfo")
+        if tryParseOverride:
+            origmetadata = {"parseinfo": kwargs["parseinfo"]}
         with open(path, "r") as f:
             origmetadata = getMetadata(f)
         skip = False
         dfraw = DataFrame()
         while not skip:
-            parseinfo, infoValid = getParseInfo(path)
+            # we remove parseinfo from kwargs if it is present.
+            # this means that the override will be tried once,
+            # and it doesnt work, we try again without override.
+            if "parseinfo" in kwargs:
+                parseinfo = kwargs.pop("parseinfo")
+                infoValid = True
+            else:
+                parseinfo, infoValid = getParseInfo(path)
             if not infoValid:
                 break
             dfraw = readCSV(path, parseinfo)
@@ -45,7 +55,8 @@ class Handler(FileIOhandler):
 
         # if the parsing was successfull and we changed the original metadata,
         # ask if we should add the metadata to the top of the file.
-        updateOrigParseInfo(path, origmetadata, parseinfo, not dfraw.empty)
+        if not tryParseOverride:
+            updateOrigParseInfo(path, origmetadata, parseinfo, not dfraw.empty)
 
         if postprocess:
             return self.processRawDF(dfraw)
