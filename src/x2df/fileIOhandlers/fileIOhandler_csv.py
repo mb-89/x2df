@@ -10,6 +10,7 @@ import inspect
 # keep it snappy once we have more and more fileIOhandlers
 
 dumpparams = inspect.signature(DataFrame.to_csv).parameters.keys()
+claimedFormats = [".csv", ".txt"]
 
 
 class Handler(FileIOhandler):
@@ -52,7 +53,7 @@ class Handler(FileIOhandler):
             return [dfraw]
 
     def claim(self, path):
-        if path.endswith(".csv"):
+        if any(path.endswith(x) for x in claimedFormats):
             return [path]
         else:
             return []
