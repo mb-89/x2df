@@ -6,6 +6,7 @@ from x2df.fileIOhandlers.fileIOhandler_csv import (
     readCSV,
     peekCSV,
     updateOrigParseInfo,
+    claimedFormats,
 )
 from pyqtgraph import mkQApp, QtCore
 
@@ -37,7 +38,6 @@ def test_unknownCSVformat(qtbot, tmp_path):
     lines = [x for x in open(dst, "r").readlines() if not x.startswith("#")]
     open(dst, "w").writelines(lines)
 
-    _ = mkQApp()
     dlg = ParserDialog(dst)
     qtbot.addWidget(dlg)
     dlg.show()
@@ -156,3 +156,16 @@ def test_updateParseInfo(qtbot, tmp_path):
     QtCore.QTimer.singleShot(50, AnswerYes)
     updateOrigParseInfo(dst, {}, {"comment": '"#"'}, True)
     assert open(dst, "r").readline().startswith("#{")
+
+
+def test_parseAllCSVFormats(tmp_path):
+    exampleDict = examples.getClassDict()
+    e = "stepresponses1"
+    dfout = exampleDict[e]().createDF()
+
+    for cf in claimedFormats:
+
+        dst = tmp_path / f"{e}.{cf}"
+        open(dst, "w").write(x2df.dump(dfout, "csv"))
+        dfsin = x2df.load(dst, postprocess=False)
+        assert not dfsin[0].empty
