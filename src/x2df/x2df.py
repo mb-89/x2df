@@ -66,9 +66,11 @@ def getExampleNames():
     return tuple(sorted(("example_" + x for x in examples.getClassDict().keys())))
 
 
-def load(src, postprocess=True, _claimedPaths=None):
+def load(src, postprocess=True, parseinfo=None, _claimedPaths=None):
     if _claimedPaths is None:
         _claimedPaths = []
+    if parseinfo is None:
+        parseinfo = {}
     src = str(src)
     globresults = glob(src)
     # gate #1: check if we want to load an example
@@ -84,11 +86,25 @@ def load(src, postprocess=True, _claimedPaths=None):
         files = [x for x in globresults if op.isfile(x)]
         dirs = [x for x in globresults if op.isdir(x)]
         for x in files:
-            dfList.extend(load(x, postprocess=postprocess, _claimedPaths=_claimedPaths))
+            dfList.extend(
+                load(
+                    x,
+                    postprocess=postprocess,
+                    parseinfo=parseinfo,
+                    _claimedPaths=_claimedPaths,
+                )
+            )
         for x in dirs:
             # we check the files before the dirs, because with some formats,
             # a file can claim adjacent dirs
-            dfList.extend(load(x, postprocess=postprocess, _claimedPaths=_claimedPaths))
+            dfList.extend(
+                load(
+                    x,
+                    postprocess=postprocess,
+                    parseinfo=parseinfo,
+                    _claimedPaths=_claimedPaths,
+                )
+            )
         return dfList
 
     x = globresults[0]
@@ -99,7 +115,12 @@ def load(src, postprocess=True, _claimedPaths=None):
 
     # gate #4: check if the given path is a dir, and if so, glob it
     if op.isdir(x):
-        return load(src + "/*", postprocess=postprocess, _claimedPaths=_claimedPaths)
+        return load(
+            src + "/*",
+            postprocess=postprocess,
+            parseinfo=parseinfo,
+            _claimedPaths=_claimedPaths,
+        )
 
     # finally, if we are here, x is the path of a single file.
     # Now we can check if any of the installed parsers claims it
@@ -108,7 +129,11 @@ def load(src, postprocess=True, _claimedPaths=None):
         if not claims:
             continue
         _claimedPaths.extend(claims)
-        dfs = hdl().parse(x, postprocess=postprocess)
+        dfs = hdl().parse(
+            x,
+            postprocess=postprocess,
+            parseinfo=parseinfo,
+        )
         return dfs
 
     # if None of the handlers claimed the file, check if it is an archive.
@@ -116,7 +141,12 @@ def load(src, postprocess=True, _claimedPaths=None):
     with tempfile.TemporaryDirectory() as td:
         try:
             shutil.unpack_archive(x, td)
-            return load(td + "/*", postprocess=postprocess, _claimedPaths=_claimedPaths)
+            return load(
+                td + "/*",
+                postprocess=postprocess,
+                parseinfo=parseinfo,
+                _claimedPaths=_claimedPaths,
+            )
         except (ValueError, shutil.ReadError) as _:  # noqa: F841
             return []  # if we are here, we found nothing
 

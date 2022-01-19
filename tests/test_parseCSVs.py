@@ -51,6 +51,23 @@ def test_unknownCSVformat(qtbot, tmp_path):
     qtbot.mouseClick(dlg.apply, QtCore.Qt.LeftButton)
 
 
+def test_unknownCSVformatWithParseInfo(qtbot, tmp_path):
+    exampleDict = examples.getClassDict()
+    e = "stepresponses1"
+    dfout = exampleDict[e]().createDF()
+    dst = tmp_path / f"{e}.csv"
+    dfout.attrs["parseinfo"] = {"sep": ";"}
+    open(dst, "w").write(x2df.dump(dfout, "csv"))
+    # we dump the df, then remove the parseinfo.
+    # this way, the parser will fail at first.
+    lines = [x for x in open(dst, "r").readlines() if not x.startswith("#")]
+    open(dst, "w").writelines(lines)
+
+    dfsin = x2df.load(dst, parseinfo={"comment": "#", "sep": ";"}, postprocess=False)
+    assert len(dfsin[0]) == len(dfout)
+    assert all(dfout.columns == dfsin[0].columns)
+
+
 def test_unknownCSVformatTriggersGUI(qtbot, tmp_path):
     exampleDict = examples.getClassDict()
     e = "stepresponses1"

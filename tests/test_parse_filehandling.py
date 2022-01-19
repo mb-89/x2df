@@ -47,7 +47,7 @@ def test_claimed_file(tmp_path, monkeypatch):
 
             return [m, s]  # we claim both files if we find both
 
-        def parse(self, path, postprocess=True):
+        def parse(self, path, postprocess=True, **kwargs):
             res = [DataFrame()]
             return res
 

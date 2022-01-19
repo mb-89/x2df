@@ -3,7 +3,7 @@ class FileIOhandler:
         """dumps the given dataframe to the given file."""
         raise NotImplementedError
 
-    def parse(self, path, postprocess=True):
+    def parse(self, path, postprocess=True, **kwargs):
         """parses the given path and returns a list of extracted dataframes."""
         raise NotImplementedError
 
