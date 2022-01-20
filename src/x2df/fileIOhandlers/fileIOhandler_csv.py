@@ -263,25 +263,34 @@ class ParserDialog(QtWidgets.QDialog):
             if not v:
                 continue
             dctentries.append(f'"{k}":{v}')
-
         if not dctentries:
-            return {}, True
+            return {}, True, ""
+
         dcttext = "{" + ",".join(dctentries) + "}"
-        dct = json.loads(dcttext)
+        try:
+            dct = json.loads(dcttext)
+        except json.decoder.JSONDecodeError:
+            return {}, False, dcttext
+
         for k, v in dct.items():
-            self.cfgItems[k].setText(v)
-        return dct, True
+            if isinstance(v, str):
+                v = '"' + v + '"'
+            self.cfgItems[k].setText(str(v))
+        return dct, True, ""
 
     def parse(self, cfg=None):
         if cfg is None:
             cfg = {}
-        cfg, cfgvalid = self.parsecfg(cfg)
+        cfg, cfgvalid, errstr = self.parsecfg(cfg)
+        usedcfg = errstr if errstr else json.dumps(cfg)
         if cfgvalid:
             self.head.seek(0)
             df = readCSV(self.head, cfg)
         if not cfgvalid or df.empty:
             txt = [
                 "The given cfg did not produce a valid dataframe.\n",
+                f"The used parse cfg was: {usedcfg}\n",
+                "strings must be enclosed by double-quotes!\n",
                 "The raw file contents are:\n",
                 "---\n",
                 "\n",
@@ -298,8 +307,12 @@ class ParserDialog(QtWidgets.QDialog):
             self.display.setPlainText(
                 "Columns:\n---\n" + repr(df.columns) + "\n\nData\n---\n" + repr(df)
             )
-            self.apply.setEnabled(True)
+            QtCore.QTimer.singleShot(0, self.enableApply)
+
             self.result = cfg
+
+    def enableApply(self):
+        self.apply.setEnabled(True)
 
     def extractParamDesc(self, txt, params):
         lines = txt.split("\n")

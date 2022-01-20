@@ -9,7 +9,10 @@ import shutil
 import tempfile
 import py7zr
 
-# import PySide6  # noqa:F401 we need this so its added to the requirements.txt
+try:
+    import PySide6  # noqa:F401 we need this so its added to the requirements.txt
+except ImportError:  # spyder will disable the import in case it already uses pyqt5
+    import PyQt5  # noqa:F401 we need this so its added to the requirements.txt
 
 log = logging.getLogger("x2df")
 

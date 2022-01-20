@@ -44,8 +44,13 @@ def test_unknownCSVformat(qtbot, tmp_path):
     blocker = qtbot.waitSignal(dlg.readySig)
     blocker.wait()
     assert not dlg.apply.isEnabled()
+    dlg.cfgItems["sep"].setText(";")  # this is wrong, we need double-quotes
+    dlg.parse()
+    qtbot.wait(50)
+    assert not dlg.apply.isEnabled()
     dlg.cfgItems["sep"].setText('";"')
     dlg.parse()
+    qtbot.wait(50)
     assert dlg.result["sep"] == ";"
     assert dlg.apply.isEnabled()
     qtbot.mouseClick(dlg.apply, QtCore.Qt.LeftButton)
